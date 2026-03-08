@@ -123,7 +123,7 @@ function TeamStatsModal({ team, matchNumber, onDelete }) {
       const response = await fetch(`${apiUrl}/scouting/update/${editedTeam.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getCookie('Authorization')}` },
-        body: JSON.stringify(editedTeam),
+        body: JSON.stringify(editedTeam, (_, v) => v === '' ? 0 : v),
       });
       if (response.ok) {
         toast({ title: "Success", description: "Record updated successfully" });
@@ -184,13 +184,13 @@ function TeamStatsModal({ team, matchNumber, onDelete }) {
           <div className="bg-default-50 p-3 rounded-lg">
             <div className="flex justify-between items-center">
               <span>Team Number</span>
-              {isEditing ? <input type="number" value={editedTeam.team} onChange={(e) => handleChange('root', 'team', parseInt(e.target.value) || 0)} className="w-24 p-1 border rounded" /> : <span className="font-medium">{team.team}</span>}
+              {isEditing ? <input type="number" value={editedTeam.team ?? ''} onChange={(e) => handleChange('root', 'team', e.target.value === '' ? '' : parseInt(e.target.value))} className="w-24 p-1 border rounded" /> : <span className="font-medium">{team.team}</span>}
             </div>
           </div>
           <div className="bg-default-50 p-3 rounded-lg">
             <div className="flex justify-between items-center">
               <span>Match Number</span>
-              {isEditing ? <input type="number" value={editedTeam.matchNumber} onChange={(e) => handleChange('root', 'matchNumber', parseInt(e.target.value) || 0)} className="w-24 p-1 border rounded" /> : <span className="font-medium">{team.matchNumber}</span>}
+              {isEditing ? <input type="number" value={editedTeam.matchNumber ?? ''} onChange={(e) => handleChange('root', 'matchNumber', e.target.value === '' ? '' : parseInt(e.target.value))} className="w-24 p-1 border rounded" /> : <span className="font-medium">{team.matchNumber}</span>}
             </div>
           </div>
         </div>
@@ -202,7 +202,7 @@ function TeamStatsModal({ team, matchNumber, onDelete }) {
             <div className="bg-default-50 p-3 rounded-lg">
               <div className="flex justify-between items-center">
                 <span>Fuel Count</span>
-                {isEditing ? <input type="number" min="0" value={editedTeam.autonomous?.fuelCount || 0} onChange={(e) => handleChange('autonomous', 'fuelCount', parseInt(e.target.value) || 0)} className="w-16 p-1 border rounded" /> : <span className="font-medium">{team.autonomous?.fuelCount || 0}</span>}
+                {isEditing ? <input type="number" min="0" value={editedTeam.autonomous?.fuelCount ?? ''} onChange={(e) => handleChange('autonomous', 'fuelCount', e.target.value === '' ? '' : parseInt(e.target.value))} className="w-16 p-1 border rounded" /> : <span className="font-medium">{team.autonomous?.fuelCount || 0}</span>}
               </div>
             </div>
             <div className="bg-default-50 p-3 rounded-lg">
@@ -227,13 +227,13 @@ function TeamStatsModal({ team, matchNumber, onDelete }) {
             <div className="bg-default-50 p-3 rounded-lg">
               <div className="flex justify-between items-center">
                 <span>Fuel Count</span>
-                {isEditing ? <input type="number" min="0" value={editedTeam.teleop?.fuelCount || 0} onChange={(e) => handleChange('teleop', 'fuelCount', parseInt(e.target.value) || 0)} className="w-16 p-1 border rounded" /> : <span className="font-medium">{team.teleop?.fuelCount || 0}</span>}
+                {isEditing ? <input type="number" min="0" value={editedTeam.teleop?.fuelCount ?? ''} onChange={(e) => handleChange('teleop', 'fuelCount', e.target.value === '' ? '' : parseInt(e.target.value))} className="w-16 p-1 border rounded" /> : <span className="font-medium">{team.teleop?.fuelCount || 0}</span>}
               </div>
             </div>
             <div className="bg-default-50 p-3 rounded-lg">
               <div className="flex justify-between items-center">
                 <span>Human Fuel</span>
-                {isEditing ? <input type="number" min="0" value={editedTeam.teleop?.humanFuelCount || 0} onChange={(e) => handleChange('teleop', 'humanFuelCount', parseInt(e.target.value) || 0)} className="w-16 p-1 border rounded" /> : <span className="font-medium">{team.teleop?.humanFuelCount || 0}</span>}
+                {isEditing ? <input type="number" min="0" value={editedTeam.teleop?.humanFuelCount ?? ''} onChange={(e) => handleChange('teleop', 'humanFuelCount', e.target.value === '' ? '' : parseInt(e.target.value))} className="w-16 p-1 border rounded" /> : <span className="font-medium">{team.teleop?.humanFuelCount || 0}</span>}
               </div>
             </div>
             <div className="bg-default-50 p-3 rounded-lg">
@@ -260,9 +260,9 @@ function TeamStatsModal({ team, matchNumber, onDelete }) {
               {isEditing ? (
                 <select value={editedTeam.endAndAfterGame?.towerStatus || 'None'} onChange={(e) => handleTowerStatusChange(e.target.value)} className="p-1 border rounded bg-white dark:bg-zinc-800">
                   <option value="None">No Tower</option>
-                  <option value="L1">L1 (30pts)</option>
+                  <option value="L1">L1 (10pts)</option>
                   <option value="L2">L2 (20pts)</option>
-                  <option value="L3">L3 (10pts)</option>
+                  <option value="L3">L3 (30pts)</option>
                 </select>
               ) : <span className="font-medium">{team.endAndAfterGame?.towerStatus || "None"}</span>}
             </div>
@@ -271,7 +271,7 @@ function TeamStatsModal({ team, matchNumber, onDelete }) {
             <div className="bg-default-50 p-3 rounded-lg">
               <div className="flex justify-between items-center">
                 <span>Ranking Pts</span>
-                {isEditing ? <input type="number" min="0" value={editedTeam.endAndAfterGame?.rankingPoint || 0} onChange={(e) => handleChange('endAndAfterGame', 'rankingPoint', parseInt(e.target.value) || 0)} className="w-16 p-1 border rounded" /> : <span className="font-medium">{team.endAndAfterGame?.rankingPoint || 0}</span>}
+                {isEditing ? <input type="number" min="0" value={editedTeam.endAndAfterGame?.rankingPoint ?? ''} onChange={(e) => handleChange('endAndAfterGame', 'rankingPoint', e.target.value === '' ? '' : parseInt(e.target.value))} className="w-16 p-1 border rounded" /> : <span className="font-medium">{team.endAndAfterGame?.rankingPoint || 0}</span>}
               </div>
             </div>
             <div className="bg-default-50 p-3 rounded-lg">
