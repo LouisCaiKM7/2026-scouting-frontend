@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, Button, Tabs, Tab, Chip } from '@heroui/react';
+import { RefreshCw } from 'lucide-react';
 import { EventsAPI } from '@/lib/api/events';
 import { ScoutEvent, EventTeam, EventMatch } from '@/lib/api/types';
 import { toast } from '@/hooks/use-toast';
@@ -16,6 +17,7 @@ export default function EventDetailPage() {
   const [teams, setTeams] = useState<EventTeam[]>([]);
   const [matches, setMatches] = useState<EventMatch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     if (!eventId) return;
@@ -75,6 +77,48 @@ export default function EventDetailPage() {
     router.push(`/pit-scouting?eventId=${eventId}`);
   };
 
+  const handleSyncTBA = async () => {
+    if (!event || !event.tbaEventKey) {
+      toast({ title: 'Error', description: 'Event key not found' });
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tba/sync/${event.tbaEventKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to sync event data');
+      }
+
+      toast({ 
+        title: 'Success', 
+        description: `Successfully synced ${event.name}` 
+      });
+      
+      // Reload event data
+      const [eventData, teamsData, matchesData] = await Promise.all([
+        EventsAPI.getAllEvents().then(events => events.find(e => e.id === eventId)),
+        EventsAPI.getEventTeams(eventId),
+        EventsAPI.getEventMatches(eventId),
+      ]);
+
+      setEvent(eventData);
+      setTeams(teamsData);
+      setMatches(matchesData);
+    } catch (error) {
+      toast({ 
+        title: 'Error', 
+        description: error instanceof Error ? error.message : 'Failed to sync event data' 
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header */}
@@ -114,6 +158,17 @@ export default function EventDetailPage() {
             >
               Pit Scouting
             </Button>
+            {event.sourceType === 'TBA' && (
+              <Button
+                color="warning"
+                size="lg"
+                onPress={handleSyncTBA}
+                isLoading={syncing}
+                startContent={<RefreshCw className="w-4 h-4" />}
+              >
+                Sync TBA Data
+              </Button>
+            )}
           </div>
         </div>
       </div>

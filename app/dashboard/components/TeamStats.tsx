@@ -35,9 +35,15 @@ export function TeamStats({ teamNumber, records }) {
   const [stats, setStats] = useState<AverageStats | null>(null);
 
   useEffect(() => {
-    if (!records || !Array.isArray(records)) return;
+    if (!records || !Array.isArray(records)) {
+      setStats(null);
+      return;
+    }
     const totalMatches = records.length;
-    if (totalMatches === 0) return;
+    if (totalMatches === 0) {
+      setStats(null);
+      return;
+    }
 
     let autoFuel = 0, towerSuccesses = 0, autoScoreTotal = 0;
     let teleopFuel = 0, humanFuel = 0, passBumps = 0, passTrenches = 0, teleopScoreTotal = 0;

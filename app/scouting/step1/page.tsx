@@ -27,7 +27,11 @@ export default function Step1() {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [matches, setMatches] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
-  const [currentEvent, setCurrentEvent] = useState<any>(null);
+  const [eventsLoading, setEventsLoading] = useState<boolean>(true);
+  const [matchesLoading, setMatchesLoading] = useState<boolean>(false);
+
+  // Get current event from events array
+  const currentEvent = events.find(e => e.id === selectedEventId);
 
   useEffect(() => {
     const urlEventId = typeof window !== 'undefined'
@@ -42,6 +46,7 @@ export default function Step1() {
   useEffect(() => {
     const loadEvents = async () => {
       try {
+        setEventsLoading(true);
         const all = await EventsAPI.getAllEvents();
         setEvents(all);
 
@@ -52,19 +57,27 @@ export default function Step1() {
         }
       } catch (e) {
         console.error('Failed to load events:', e);
+      } finally {
+        setEventsLoading(false);
       }
     };
 
     loadEvents();
-  }, [setFormData]);
+  }, []);
 
   // Load matches/teams whenever event changes (step1 should not depend on sessionStorage)
   useEffect(() => {
     if (!selectedEventId) {
       setMatches([]);
       setTeams([]);
+      setMatchesLoading(false);
       return;
     }
+
+    // Clear previous data immediately when event changes and set loading
+    setMatches([]);
+    setTeams([]);
+    setMatchesLoading(true);
 
     const load = async () => {
       try {
@@ -79,6 +92,8 @@ export default function Step1() {
         console.error('Failed to load event teams/matches:', e);
         setTeams([]);
         setMatches([]);
+      } finally {
+        setMatchesLoading(false);
       }
     };
 
@@ -211,10 +226,8 @@ export default function Step1() {
                   selectedKeys={selectedEventId ? new Set([selectedEventId]) : new Set()}
                   onSelectionChange={(keys) => {
                     const id = Array.from(keys)[0] as string;
-                    const event = events.find(e => e.id === id);
                     setSelectedEventId(id);
-                    setCurrentEvent(event);
-                    setFormData((prev) => ({ ...prev, eventId: id, team: 0, matchNumber: 0, alliance: '' }));
+                    setFormData((prev) => ({ ...prev, eventId: id, eventMatchId: '', team: 0, matchNumber: 0, alliance: '' }));
                   }}
                   isRequired
                 >
@@ -257,7 +270,7 @@ export default function Step1() {
                   <label className="text-lg sm:text-xl text-default-600 block font-google-sans font-extrabold pb-2">
                     Match Number
                   </label>
-                  {currentEvent?.sourceType === 'TBA' && formData.matchType !== MatchType.MATCH && formData.matchType !== MatchType.PRAC ? (
+                  {currentEvent?.sourceType === 'TBA' && !eventsLoading && !matchesLoading && formData.matchType !== MatchType.MATCH && formData.matchType !== MatchType.PRAC ? (
                     <Select
                       label="Match Number"
                       placeholder="Select match"
@@ -290,7 +303,7 @@ export default function Step1() {
                   <label className="text-lg sm:text-xl text-default-600 block font-google-sans font-extrabold pb-2">
                     Team Number
                   </label>
-                  {currentEvent?.sourceType === 'TBA' ? (
+                  {currentEvent?.sourceType === 'TBA' && !eventsLoading ? (
                     <Select
                       label="Team Number"
                       placeholder="Select team"

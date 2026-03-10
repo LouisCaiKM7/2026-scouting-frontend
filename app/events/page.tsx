@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, Button, Chip, Input } from '@heroui/react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, RefreshCw } from 'lucide-react';
 import { EventsAPI } from '@/lib/api/events';
 import { ScoutEvent } from '@/lib/api/types';
 import { toast } from '@/hooks/use-toast';
@@ -14,6 +14,7 @@ export default function EventsPage() {
   const [events, setEvents] = useState<ScoutEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [syncingEventId, setSyncingEventId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -34,6 +35,41 @@ export default function EventsPage() {
     event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (event.tbaEventKey && event.tbaEventKey.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleSyncTBA = async (event: ScoutEvent) => {
+    if (!event.tbaEventKey) {
+      toast({ title: 'Error', description: 'Event key not found' });
+      return;
+    }
+
+    setSyncingEventId(event.id);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tba/sync/${event.tbaEventKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to sync event data');
+      }
+
+      toast({ 
+        title: 'Success', 
+        description: `Successfully synced ${event.name}` 
+      });
+      
+      // Reload events to get updated data
+      const eventsData = await EventsAPI.getAllEvents();
+      setEvents(eventsData);
+    } catch (error) {
+      toast({ 
+        title: 'Error', 
+        description: error instanceof Error ? error.message : 'Failed to sync event data' 
+      });
+    } finally {
+      setSyncingEventId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -125,6 +161,22 @@ export default function EventsPage() {
                   >
                     View Details
                   </Button>
+                  {event.sourceType === 'TBA' && (
+                    <Button
+                      size="sm"
+                      color="secondary"
+                      variant="flat"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSyncTBA(event);
+                      }}
+                      isLoading={syncingEventId === event.id}
+                      startContent={<RefreshCw className="w-4 h-4" />}
+                    >
+                      Sync
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>
@@ -150,3 +202,4 @@ export default function EventsPage() {
     </div>
   );
 }
+
